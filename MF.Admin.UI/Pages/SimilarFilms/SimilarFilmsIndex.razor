@@ -1,0 +1,33 @@
+﻿<table class="table mt-2">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Similar Films</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                @if (@item.SimilarFilms.Count() == 0)
+                {
+                    <td>Empty</td>
+                }
+                else
+                {
+                    <td>@item.SimilarFilms.Select(f => f).Aggregate((i, j) => i + ", " + j)</td>
+                }
+                <td class="d-flex me-1 justify-content-end">
+                    <button class="btn btn-outline-primary me-1" @onclick="(() => OnClick.InvokeAsync(new ClickModel(PageType.AddFilm, item.Id)))">Add</button>
+                    <button class="btn btn-outline-danger me-1" @onclick="(() => OnClick.InvokeAsync(new ClickModel(PageType.RemoveFilm, item.Id)))">Remove</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter] public List<FilmDTO> Model { get; set; } = new();
+    [Parameter] public EventCallback<ClickModel> OnClick { get; set; }
+}

@@ -1,0 +1,99 @@
+﻿@inject IAdminService AdminService
+
+<div class="d-xl-flex justify-content-center">
+    <EditForm Model="@Model" OnValidSubmit="@OnFormSubmit" class="mb-5 border border-1 border-secondary p-2 w-25">
+        <DataAnnotationsValidator />
+        <h4>@Page Film</h4>
+        <div class="mb-3">
+            @if (Page.Equals(PageType.Delete))
+            {
+                <InputText id="Title" class="form-control me-2" @bind-Value="Model.Title" disabled placeholder="Title"></InputText>
+            }
+            else
+            {
+                <InputText id="Title" class="form-control me-2" @bind-Value="Model.Title" placeholder="Title"></InputText>
+            }
+            <ValidationMessage For="@(() => Model.Title)" />
+        </div>
+        @if (!Page.Equals(PageType.Delete))
+        {
+            <div class="mb-3">
+                <MudDatePicker Editable="true" id="Date" class="form-control me-2" @bind-Value="Model.Released" placeholder="Release date" />
+                <ValidationMessage For="@(() => Model.Released)" />
+            </div>
+            <div class="mb-3">
+                <InputText id="Description" class="form-control me-2" @bind-Value="Model.Description" placeholder="Description"></InputText>
+                <ValidationMessage For="@(() => Model.Description)" />
+            </div>
+            <div class="mb-3">
+                <InputText id="FilmURL" class="form-control me-2" @bind-Value="Model.FilmUrl" placeholder="FilmURL"></InputText>
+                <ValidationMessage For="@(() => Model.FilmUrl)" />
+            </div>
+            <div class="mb-3">
+                <InputText id="ThumbnailURL" class="form-control me-2" @bind-Value="Model.ThumbnailUrl" placeholder="ThumbnailURL"></InputText>
+                <ValidationMessage For="@(() => Model.ThumbnailUrl)" />
+            </div>
+
+            <InputSelect @bind-Value="Model.DirectorId" class="form-control mb-3">
+                <option value=0>Director...</option>
+                @foreach (var director in Directors)
+                {
+                    <option value="@director.Id">@director.Name</option>
+                }
+            </InputSelect>
+            <div class="mb-3">
+                <label>
+                    <InputCheckbox @bind-Value="Model.Free" />
+                    Free Film
+                </label>
+            </div>
+        }
+        <button type="submit" class="btn btn-@(Page.Equals(PageType.Delete) ? "danger" : "primary")">@Page</button>
+    </EditForm>
+</div>
+
+
+@code {
+    [Parameter] public FilmEditDTO Model { get; set; } = new();
+    //[Parameter] public string Format { get; set; } = "yyyy-MM-dd";
+    [Parameter] public string Page { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnChange { get; set; }
+    List<DirectorDTO> Directors { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Directors = await AdminService.GetAsync<DirectorDTO>("directors");
+    }
+
+    async Task OnFormSubmit()
+    {
+        try
+        {
+            if (Page.Equals(PageType.Create))
+            {
+                FilmCreateDTO create = new FilmCreateDTO()
+                    {
+                        Title = Model.Title,
+                        Description = Model.Description,
+                        FilmUrl = Model.FilmUrl,
+                        ThumbnailUrl = Model.ThumbnailUrl,
+                        Free = Model.Free,
+                        DirectorId = Model.DirectorId,
+                        Released = Model.Released
+                    };
+                await AdminService.CreateAsync<FilmCreateDTO>("films", create);
+            }
+            if (Page.Equals(PageType.Edit))
+                await AdminService.EditAsync<FilmEditDTO>($"films/{Model.Id}", Model);
+            if (Page.Equals(PageType.Delete))
+                await AdminService.DeleteAsync<FilmEditDTO>($"films/{Model.Id}");
+
+            await OnChange.InvokeAsync("");
+        }
+        catch
+        {
+            await OnChange.InvokeAsync("Couldn't create/edit/delete the film");
+        }
+
+    }
+}

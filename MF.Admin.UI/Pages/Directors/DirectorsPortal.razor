@@ -1,0 +1,67 @@
+﻿@inject IAdminService AdminService
+
+@if (!string.IsNullOrEmpty(Alert))
+{
+    <div class="d-flex">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>@Alert</strong>
+            <button type="button" @onclick="CloseAlert" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+}
+
+@if (Navigation == PageType.Create)
+{
+    <ChangeDirector Page="@Navigation" OnChange="OnChange"></ChangeDirector>
+}
+@if (Navigation == PageType.Edit || Navigation == PageType.Delete)
+{
+    <ChangeDirector Page="@Navigation" OnChange="OnChange" Model="Director"></ChangeDirector>
+}
+
+<div class="d-flex">
+    <a href="/" type="button" class="btn btn-outline-secondary me-1">Home</a>
+    <button type="button" class="btn btn-outline-primary me-1" @onclick="()=>ChangePageType(PageType.Index)">Index</button>
+    <button type="button" class="btn btn-outline-success me-1" @onclick="()=>ChangePageType(PageType.Create)">Create</button>
+</div>
+
+<DirectorsIndex OnClick="OnClick" Model="Model"></DirectorsIndex>
+
+@code {
+    List<DirectorDTO> Model { get; set; } = new();
+    string Alert { get; set; } = string.Empty;
+    string Navigation { get; set; } = PageType.Index;
+    public DirectorDTO Director { get; set; } = new();
+
+    void ChangePageType(string pageType) => Navigation = pageType;
+
+    void CloseAlert() => Alert = string.Empty;
+
+    async Task OnClick(ClickModel model)
+    {
+        if (model.PageType.Equals(PageType.Edit) || model.PageType.Equals(PageType.Delete))
+            Director = await AdminService.SingleAsync<DirectorDTO>($"directors/{model.Id}") ?? new();
+
+        ChangePageType(model.PageType);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model = await AdminService.GetAsync<DirectorDTO>($"directors");
+
+    }
+
+    async Task OnChange(string alert)
+    {
+        try
+        {
+            Alert = alert;
+            Model = await AdminService.GetAsync<DirectorDTO>($"directors");
+            ChangePageType(PageType.Index);
+        }
+        catch
+        {
+            Alert = "Couldn't create/edit/delete the director";
+        }
+    }
+}

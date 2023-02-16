@@ -1,0 +1,99 @@
+﻿@inject IAdminService AdminService
+
+<div class="d-xl-flex justify-content-center">
+    <EditForm Model="@Model" OnValidSubmit="@OnFormSubmit" class="mb-5 border border-1 border-secondary p-2 w-25">
+        <DataAnnotationsValidator />
+        <h4>@Page -> @Genre</h4>
+        <div class="mb-3">
+            @if(Page.Equals(PageType.AddFilm))
+            {
+                <InputSelect @bind-Value="Model.FilmId" class="form-control mb-3">
+                <option value=0>Film...</option>
+                @foreach (var film in Films)
+                {
+                    <option value="@film.Id">@film.Title</option>
+                }
+                </InputSelect>
+            }
+            else
+            {
+                <InputSelect @bind-Value="Model.FilmId" class="form-control mb-3">
+                <option value=0>Film...</option>
+                @foreach (var film in FilmsInGenre)
+                {
+                    <option value="@film.Id">@film.Title</option>
+                }
+                </InputSelect>
+            }
+
+        </div>
+        <button type="submit" class="btn btn-@(Page.Equals(PageType.Delete) ? "danger" : "primary")">@Page</button>
+    </EditForm>
+</div>
+
+
+@code {
+    [Parameter] public FilmGenreDTO Model { get; set; } = new();
+    [Parameter] public string Page { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnChange { get; set; }
+    [Parameter] public List<FilmGenreDTO> FilmGenres { get; set; } = new();
+    [Parameter] public string Genre { get; set; } = string.Empty;
+    [Parameter] public int GenreId { get; set; } = 0;
+    List<FilmDTO> FilmsInGenre { get; set; } = new();
+    List<GenreDTO> Genres { get; set; } = new();
+    List<FilmDTO> Films { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model.GenreId = GenreId;
+        Films = await AdminService.GetAsync<FilmDTO>("films");
+        Genres = await AdminService.GetAsync<GenreDTO>("genres");
+        foreach (var fg in FilmGenres)
+        {
+            foreach (var film in Films)
+            {
+                if (film.Id == fg.FilmId)
+                {
+                    FilmsInGenre.Add(film);
+                }
+            }
+        }
+
+        RemoveDuplicates();
+    }
+
+    async Task OnFormSubmit()
+    {
+        try
+        {
+            if (Page.Equals(PageType.AddFilm))
+            {
+                await AdminService.CreateAsync<FilmGenreDTO>("FilmGenres", Model);
+            }
+            if (Page.Equals(PageType.RemoveFilm))
+                await AdminService.DeleteAsync<FilmGenreDTO>($"FilmGenres/{Model.FilmId}/{Model.GenreId}");
+
+            await OnChange.InvokeAsync("");
+        }
+        catch
+        {
+            await OnChange.InvokeAsync("Couldn't create/edit/delete the FilmGenre");
+        }
+
+    }
+
+    void RemoveDuplicates()
+    {
+        var filmsToRemove = from fg in FilmsInGenre
+                            join f in Films
+                            on fg.Id equals f.Id
+                            into sg
+                            from fi in sg
+                            select fi;
+
+        foreach (var film in filmsToRemove)
+        {
+            Films.Remove(film);
+        }
+    }
+}
