@@ -33,7 +33,7 @@ public interface IDbService
 
     Task<TEntity> AddRefAsync<TEntity, TDto>(TDto dto) where TEntity : class, IReferenceEntity where TDto : class;
 
-    Task<bool> DeleteRefAsync<TReferenceEntity, TDto>(TDto dto, int filmId, int genreId)
+    Task<bool> DeleteRefAsync<TReferenceEntity, TDto>(TDto dto)
        where TReferenceEntity : class where TDto : class;
 
     Task<bool> AnyRefAsync<TEntity>(Expression<Func<TEntity, bool>> expression)
@@ -46,4 +46,7 @@ public interface IDbService
     Task<TReferenceEntity> SingleRefEntityAsync<TReferenceEntity>(Expression<Func<TReferenceEntity, bool>> expression)
         where TReferenceEntity : class;
     Task<List<FilmGenreDTO>> GetFilmsInGenreAsync(int genreId);
+    Task<TEntity?> SingleAsync<TEntity>(Expression<Func<TEntity, bool>> expression) where TEntity : class, IEntity;
+    Task<bool> DeleteSimilarFilmsAsync(int id);
+    Task<bool> DeleteFilmGenresAsync(int filmId);
 }

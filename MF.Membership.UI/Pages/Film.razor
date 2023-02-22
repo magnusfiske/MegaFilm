@@ -1,0 +1,59 @@
+﻿@page "/film/{Id:int}"
+@inject IMembershipService membershipService
+@inject NavigationManager Navigation
+
+<h3 class="text-center text-white">@Model.Title</h3>
+
+<a class="btn btn-secondary rounded-0 mb-4" href="/">
+    <i class="oi oi-arrow-left"></i><span class="vertical-align"> Back to dashboard</span>
+</a>
+
+<section class="d-flex">
+    <div class="description d-flex flex-column me-5">
+        <p class="mt-2">@Model.Description</p>
+        <div class="d-flex align-content-center">
+            <div class="me-1 d-flex me-3">
+                <p>Director: @Model.Director.Name</p>
+            </div>
+            <div>
+                <p>Released: @Model.Released.ToString("yyyy")</p>
+            </div>
+        </div>
+        <a class="btn btn-primary rounded-0 mt-4" href="/play/@Model.Id"><i class="oi oi-media-play"><span class="veritcal-align ms-2">Play</span></i></a>
+    </div>
+    <aside>
+        <img src="@Model.ThumbnailUrl">
+    </aside>
+</section>
+
+@if (Model.SimilarFilms.Count() > 0)
+{
+    <div class="d-flex flex-column films">
+    <h4>Liknande titlar</h4>
+    <div class="d-flex flex-wrap films">
+        @foreach (var film in Model.SimilarFilms.Select(f => f.Similar))
+        {
+
+            <a href="film/@film.Id">
+                <div class="film" style="background-image:url('@film.ThumbnailUrl');">
+                    <p>@film.Title</p>
+                </div>
+            </a>
+        }
+
+    </div>
+    </div>
+}
+
+
+@code {
+    [Parameter] public int Id { get; set; }
+    //public FilmDTO Model { get; set; } = new();
+    public FilmSimilarDTO Model { get; set; } = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        //Model = await membershipService.GetFilmAsync(Id);
+        Model = await membershipService.GetFilmSimilarAsync(Id);
+    }
+}

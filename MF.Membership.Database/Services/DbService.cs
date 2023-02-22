@@ -21,7 +21,7 @@ public class DbService : IDbService
         return _mapper.Map<List<TDto>>(entities);
     }
 
-    private async Task<TEntity?> SingleAsync<TEntity>(Expression<Func<TEntity,
+    public async Task<TEntity?> SingleAsync<TEntity>(Expression<Func<TEntity,
     bool>> expression) where TEntity : class, IEntity =>
     await _db.Set<TEntity>().SingleOrDefaultAsync(expression);
 
@@ -118,6 +118,47 @@ public class DbService : IDbService
         return _mapper.Map<List<FilmGenreDTO>>(films);
     }
 
+    public async Task<bool> DeleteFilmGenresAsync(int filmId)
+    {
+        try
+        {
+            var genreConnections = await _db.Set<FilmGenre>()
+                .Where(fg => fg.FilmId == filmId)
+                .ToListAsync();
+
+            foreach (var genreConnection in genreConnections)
+            {
+                _db.Remove(genreConnection);
+            }
+
+            return await _db.SaveChangesAsync() >= 0;
+        }
+        catch
+        {
+            throw;
+        }
+    }
+
+
+    public async Task<bool> DeleteSimilarFilmsAsync(int id)
+    {
+        try
+        {
+            var similars = await _db.Set<SimilarFilm>()
+                .Where(sf => (sf.ParentFilmId == id) || (sf.SimilarFilmId == id))
+                .ToListAsync();
+
+            foreach (var similar in similars)
+                _db.Remove(similar);
+
+            return await _db.SaveChangesAsync() >= 0;
+        }
+        catch
+        {
+            throw;
+        }
+    }
+
     public void Include<TEntity>() where TEntity : class, IEntity
     {
         var propertyNames =
@@ -166,7 +207,7 @@ public class DbService : IDbService
 
     async Task<TDto> IDbService.SingleRefAsync<TReferenceEntity, TDto>(Expression<Func<TReferenceEntity, bool>> expression) where TReferenceEntity : class
     {
-        var entity = await _db.Set<TReferenceEntity>().AsNoTracking().SingleOrDefaultAsync(expression);//SingleRefAsync<TReferenceEntity>(expression);
+        var entity = await _db.Set<TReferenceEntity>().SingleOrDefaultAsync(expression);//SingleRefAsync<TReferenceEntity>(expression);
         return _mapper.Map<TDto>(entity);
     }
 
@@ -175,7 +216,7 @@ public class DbService : IDbService
         return await _db.Set<TReferenceEntity>().SingleOrDefaultAsync(expression);//SingleRefAsync<TReferenceEntity>(expression);
     }
 
-    public async Task<bool> DeleteRefAsync<TReferenceEntity, TDto>(TDto dto, int filmId, int genreId)
+    public async Task<bool> DeleteRefAsync<TReferenceEntity, TDto>(TDto dto)
         where TReferenceEntity : class where TDto : class
     {
         try
@@ -214,7 +255,7 @@ public class DbService : IDbService
         }
     }
     public void UpdateFilmGenre(int id, FilmGenreDTO dto)
-        //where TEntity : class, IReferenceEntity where TDto : class
+    //where TEntity : class, IReferenceEntity where TDto : class
     {
         var entity = _mapper.Map<FilmGenre>(dto);
         entity.FilmId = id;

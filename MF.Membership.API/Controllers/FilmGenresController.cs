@@ -35,7 +35,6 @@ public class FilmGenresController : ControllerBase
         {
             return Results.BadRequest();
         }
-        return Results.NotFound();
     }
 
     // POST api/<FilmGenresController>
@@ -86,26 +85,17 @@ public class FilmGenresController : ControllerBase
         try
         {
             //_db.IncludeRef<FilmGenre>();
-            var dto = await _db.SingleRefAsync<FilmGenre, FilmGenreDTO>(f => (f.FilmId.Equals(filmId)) && (f.GenreId.Equals(genreId)));
+           // var dto = await _db.SingleRefAsync<FilmGenre, FilmGenreDTO>(f => (f.FilmId.Equals(filmId)) && (f.GenreId.Equals(genreId)));
             
 
-            var success = await _db.DeleteRefAsync<FilmGenre, FilmGenreDTO>(dto, filmId, genreId);
+            var success = await _db.DeleteRefAsync<FilmGenre, FilmGenreDTO>(new FilmGenreDTO { FilmId = filmId, GenreId = genreId });
 
             if (!success) return Results.BadRequest();
 
             success = await _db.SaveChangesAsync();
 
             if (!success) return Results.BadRequest();
-            //var contextOptions = new DbContextOptionsBuilder<MFContext>()
-            //    .UseSqlServer(@"Server=(localdb)\\mssqllocaldb;Database=MFMembershipDb")
-            //    .Options;
-            //using (var db = new MFContext(contextOptions)) 
-            //{
-
-            //    db.Remove(entity);
-            //    var success = await db.SaveChangesAsync();
-            //    if (success < 0) return Results.BadRequest();
-            //}
+           
 
             return Results.NoContent();
         }

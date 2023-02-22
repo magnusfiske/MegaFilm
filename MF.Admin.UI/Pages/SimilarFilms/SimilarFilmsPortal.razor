@@ -12,19 +12,19 @@
     </div>
 }
 
-@if (Navigation == PageType.Create)
+<!--@if (Navigation == PageType.Create)
 {
     <ChangeSimilarFilm Page="@Navigation" OnChange="OnChange"></ChangeSimilarFilm>
-}
-@if (Navigation == PageType.Edit || Navigation == PageType.Delete)
+}-->
+@if (Navigation == PageType.AddFilm || Navigation == PageType.RemoveFilm)
 {
-    <ChangeSimilarFilm Page="@Navigation" OnChange="OnChange" Model="SimilarFilm"></ChangeSimilarFilm>
+    <ChangeSimilarFilm Page="@Navigation" OnChange="OnChange" Model="@SimilarFilm" Film="@Film" ParentFilmId="@ParentFilmId"></ChangeSimilarFilm>
 }
 
 <div class="d-flex">
     <a href="/" type="button" class="btn btn-outline-secondary me-1">Home</a>
     <button type="button" class="btn btn-outline-primary me-1" @onclick="()=>ChangePageType(PageType.Index)">Index</button>
-    <button type="button" class="btn btn-outline-success me-1" @onclick="()=>ChangePageType(PageType.Create)">Create</button>
+    <!--<button type="button" class="btn btn-outline-success me-1" @onclick="()=>ChangePageType(PageType.Create)">Create</button>-->
 </div>
 
 <SimilarFilmsIndex OnClick="OnClick" Model="Model"></SimilarFilmsIndex>
@@ -34,6 +34,8 @@
     string Alert { get; set; } = string.Empty;
     [Parameter] public string Navigation { get; set; } = PageType.Index;
     public SimilarFilmDTO SimilarFilm { get; set; } = new();
+    public FilmSimilarDTO Film { get; set; } = new();
+    public int ParentFilmId { get; set; } = 0;
 
     void ChangePageType(string pageType) => Navigation = pageType;
 
@@ -41,15 +43,19 @@
 
     async Task OnClick(ClickModel model)
     {
-        if (model.PageType.Equals(PageType.Edit) || model.PageType.Equals(PageType.Delete))
-            SimilarFilm = await AdminService.SingleAsync<SimilarFilmDTO>($"SimilarFilms/{model.Id}") ?? new();
+        if (model.PageType.Equals(PageType.AddFilm) || model.PageType.Equals(PageType.RemoveFilm))
+        {
+            ParentFilmId = model.Id;
+            //SimilarFilm = await AdminService.SingleAsync<SimilarFilmCreateDTO>($"SimilarFilms/{model.Id}") ?? new();
+            Film = await AdminService.SingleAsync<FilmSimilarDTO>($"Films/{model.Id}?isSimilar=true") ?? new();
+        }
 
         ChangePageType(model.PageType);
     }
 
     protected override async Task OnInitializedAsync()
     {
-        Model = await AdminService.GetAsync<SimilarFilmDTO>($"SimilarFilms");
+        Model = await AdminService.GetAsync<FilmDTO>($"Films");
     }
 
     async Task OnChange(string alert)
@@ -57,7 +63,7 @@
         try
         {
             Alert = alert;
-            Model = await AdminService.GetAsync<SimilarFilmDTO>($"SimilarFilms");
+            Model = await AdminService.GetAsync<FilmDTO>($"Films");
             ChangePageType(PageType.Index);
         }
         catch

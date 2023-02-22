@@ -3,11 +3,11 @@
 <div class="d-xl-flex justify-content-center">
     <EditForm Model="@Model" OnValidSubmit="@OnFormSubmit" class="mb-5 border border-1 border-secondary p-2 w-25">
         <DataAnnotationsValidator />
-        <h4>@Page -> @Genre</h4>
+        <h4>@Page -> @Film.Title</h4>
         <div class="mb-3">
             @if (Page.Equals(PageType.AddFilm))
             {
-                <InputSelect @bind-Value="Model.FilmId" class="form-control mb-3">
+                <InputSelect @bind-Value="Model.SimilarFilmId" class="form-control mb-3">
                     <option value=0>Film...</option>
                     @foreach (var film in Films)
                     {
@@ -17,9 +17,9 @@
             }
             else
             {
-                <InputSelect @bind-Value="Model.FilmId" class="form-control mb-3">
+                <InputSelect @bind-Value="Model.SimilarFilmId" class="form-control mb-3">
                     <option value=0>Film...</option>
-                    @foreach (var film in FilmsInGenre)
+                    @foreach (var film in FilmsInSimilar)
                     {
                         <option value="@film.Id">@film.Title</option>
                     }
@@ -37,27 +37,18 @@
     [Parameter] public string Page { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> OnChange { get; set; }
     [Parameter] public List<FilmGenreDTO> FilmGenres { get; set; } = new();
-    [Parameter] public string Genre { get; set; } = string.Empty;
-    [Parameter] public int GenreId { get; set; } = 0;
-    List<FilmDTO> FilmsInGenre { get; set; } = new();
-    List<GenreDTO> Genres { get; set; } = new();
+    [Parameter] public FilmSimilarDTO Film { get; set; } = new();
+    [Parameter] public int ParentFilmId { get; set; } = 0;
+    List<FilmEditDTO> FilmsInSimilar { get; set; } = new();
     List<FilmDTO> Films { get; set; } = new();
+    List<SimilarFilmDTO> Similars { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
-        Model.GenreId = GenreId;
+        Model.ParentFilmId = ParentFilmId;
         Films = await AdminService.GetAsync<FilmDTO>("films");
-        Genres = await AdminService.GetAsync<GenreDTO>("genres");
-        foreach (var fg in FilmGenres)
-        {
-            foreach (var film in Films)
-            {
-                if (film.Id == fg.FilmId)
-                {
-                    FilmsInGenre.Add(film);
-                }
-            }
-        }
+
+        AddSimilars();
 
         RemoveDuplicates();
     }
@@ -68,10 +59,10 @@
         {
             if (Page.Equals(PageType.AddFilm))
             {
-                await AdminService.CreateAsync<FilmGenreDTO>("FilmGenres", Model);
+                await AdminService.CreateAsync<SimilarFilmDTO>("SimilarFilms", Model);
             }
             if (Page.Equals(PageType.RemoveFilm))
-                await AdminService.DeleteAsync<FilmGenreDTO>($"FilmGenres/{Model.FilmId}/{Model.GenreId}");
+                await AdminService.DeleteAsync<SimilarFilmDTO>($"SimilarFilms?id={Model.ParentFilmId}&id={Model.SimilarFilmId}");
 
             await OnChange.InvokeAsync("");
         }
@@ -82,11 +73,24 @@
 
     }
 
+    void AddSimilars()
+    {
+        foreach (var fs in Film.SimilarFilms)
+        {
+            Similars.Add(fs);
+        }
+
+        foreach (var f in Similars)
+        {
+            FilmsInSimilar.Add(f.Similar);
+        }
+    }
+
     void RemoveDuplicates()
     {
-        var filmsToRemove = from fg in FilmsInGenre
+        var filmsToRemove = from fs in FilmsInSimilar
                             join f in Films
-                            on fg.Id equals f.Id
+                            on fs.Id equals f.Id
                             into sg
                             from fi in sg
                             select fi;

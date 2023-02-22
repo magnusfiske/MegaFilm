@@ -31,11 +31,19 @@ public class SimilarFilmsController : ControllerBase
     }
 
     // GET api/<SimilarFilmsController>/5
-    [HttpGet("{id}")]
-    public string Get(int id)
-    {
-        return "value";
-    }
+    //[HttpGet("{parentId:int}", Name = "Get")]
+    //public async Task<IResult> Get(int parentId)
+    //{
+    //    try
+    //    {
+    //        var films = await _db.GetFilmsInGenreAsync(parentId);
+    //        return Results.Ok(films);
+    //    }
+    //    catch
+    //    {
+    //        return Results.BadRequest();
+    //    }
+    //}
 
     // POST api/<SimilarFilmsController>
     [HttpPost]
@@ -65,8 +73,25 @@ public class SimilarFilmsController : ControllerBase
     }
 
     // DELETE api/<SimilarFilmsController>/5
-    [HttpDelete("{id}")]
-    public void Delete(int id)
+    [HttpDelete()]
+    public async Task<IResult> Delete([FromQuery] int[] id)
     {
+        try
+        {
+            var success = await _db.DeleteRefAsync<SimilarFilm, SimilarFilmDTO>(new SimilarFilmDTO { ParentFilmId = id[0], SimilarFilmId = id[1] });
+
+            if (!success) return Results.BadRequest();
+
+            success = await _db.SaveChangesAsync();
+
+            if (!success) return Results.BadRequest();
+
+
+            return Results.NoContent();
+        }
+        catch
+        {
+            throw;
+        }
     }
 }

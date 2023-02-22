@@ -1,0 +1,25 @@
+﻿@inject NavigationManager NavManager
+
+<EditForm Model="@model" OnValidSubmit="@Login" class="d-flex">
+    <InputText id="email" class="me-2" @bind-Value="model.Email" placeholder="Email"></InputText>
+    <InputText id="password" class="me-2" @bind-Value="model.Password" placeholder="Password"></InputText>
+    <button type="submit" class="btn btn-success me-2">Login</button>
+   
+</EditForm>
+<EditForm Model="@model" OnValidSubmit="@RegisterUser" class="d-flex">
+    <button type="submit" class="btn btn-primary me-1">Register</button>
+
+</EditForm>
+@code {
+    private AuthenticationUserModel model = new();
+
+    private async Task Login()
+    {
+
+    }
+
+    private async Task RegisterUser()
+    {
+        NavManager.NavigateTo("/register");
+    }
+}

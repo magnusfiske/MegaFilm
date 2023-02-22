@@ -35,14 +35,23 @@ namespace MF.Membership.API.Controllers
 
         // GET api/<FilmsController>/5
         [HttpGet("{id}")]
-        public async Task<IResult> Get(int id)
+        public async Task<IResult> Get(int id,[FromQuery]bool isSimilar)
         {
             try
-            {
+            {   
                 _db.Include<Film>();
-                _db.IncludeRef<FilmGenre>();
-                var result = await _db.SingleAsync<Film, FilmDTO>(i => i.Id == id);
-                return result is null ? Results.NotFound() : Results.Ok(result);
+                if(isSimilar)
+                {
+                    _db.IncludeRef<SimilarFilm>();
+                    var result = await _db.SingleAsync<Film, FilmSimilarDTO>(i => i.Id == id);
+                    return result is null ? Results.NotFound() : Results.Ok(result);
+                }
+                else
+                {
+                    _db.IncludeRef<FilmGenre>();
+                    var result = await _db.SingleAsync<Film, FilmDTO>(i => i.Id == id);
+                    return result is null ? Results.NotFound() : Results.Ok(result);
+                }
             }
             catch { }
 
@@ -102,15 +111,26 @@ namespace MF.Membership.API.Controllers
         {
             try
             {
-                var success = await _db.DeleteAsync<Film>(id);
-                if (!success)
-                    return Results.NotFound();
 
-                success = await _db.SaveChangesAsync();
-                if (!success)
-                    return Results.BadRequest();
+                return !await _db.DeleteSimilarFilmsAsync(id) ? Results.UnprocessableEntity()
+                    : !await _db.DeleteFilmGenresAsync(id) ? Results.UnprocessableEntity()
+                    : !await _db.DeleteAsync<Film>(id) ? Results.NotFound()
+                    : !await _db.SaveChangesAsync() ? Results.BadRequest() : Results.NoContent();
 
-                return Results.NoContent();
+
+                //if (!await _db.DeleteSimilarFilmsAsync(id))
+                //    return Results.UnprocessableEntity();
+
+                //if (!await _db.DeleteFilmGenresAsync(id))
+                //    return Results.UnprocessableEntity();
+
+                //if (!await _db.DeleteAsync<Film>(id))
+                //    return Results.NotFound();
+
+                //if (!await _db.SaveChangesAsync())
+                //    return Results.BadRequest();
+
+                //return Results.NoContent();
 
             }
             catch { }

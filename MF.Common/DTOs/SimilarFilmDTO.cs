@@ -7,7 +7,7 @@ public class SimilarFilmDTO
     public int SimilarFilmId { get; set; }
 
     //public virtual FilmDTO? Film { get; set; }
-    public virtual FilmDTO? Similar { get; set; }
+    public virtual FilmEditDTO? Similar { get; set; }
 }
 
 public class SimilarFilmCreateDTO

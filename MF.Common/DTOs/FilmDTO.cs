@@ -10,13 +10,13 @@ public class FilmDirectorDTO
     public string? Description { get; set; }
     public string? FilmUrl { get; set; }
     public string? ThumbnailUrl { get; set; }
-    public virtual List<string>? Genres { get; set; }
-    public virtual List<string>? SimilarFilms { get; set; }
+    public virtual List<string>? Genres { get; set; } = new();
+    public virtual List<string>? SimilarFilms { get; set; } = new();
 }
 
 public class FilmDTO : FilmDirectorDTO
 {
-    public DirectorDTO? Director { get; set; }
+    public DirectorDTO? Director { get; set; } = new();
 }
 
 public class FilmCreateDTO
@@ -36,3 +36,8 @@ public class FilmEditDTO : FilmCreateDTO
     public int Id { get; set; }
 }
 
+public class FilmSimilarDTO : FilmEditDTO
+{
+    public virtual DirectorDTO? Director { get; set; } = new();
+    public virtual List<SimilarFilmDTO>? SimilarFilms { get; set; } = new();
+}

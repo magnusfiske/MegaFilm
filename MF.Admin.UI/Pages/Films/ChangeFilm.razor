@@ -18,7 +18,7 @@
         @if (!Page.Equals(PageType.Delete))
         {
             <div class="mb-3">
-                <MudDatePicker Editable="true" id="Date" class="form-control me-2" @bind-Value="Model.Released" placeholder="Release date" />
+                <MudDatePicker Editable="true" id="Date" class="form-control me-2" @bind-Value="Model.Released" Label="Release date" Placeholder="@Date.ToString("d")"/>
                 <ValidationMessage For="@(() => Model.Released)" />
             </div>
             <div class="mb-3">
@@ -59,10 +59,14 @@
     [Parameter] public string Page { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> OnChange { get; set; }
     List<DirectorDTO> Directors { get; set; } = new();
+    DateTime Date { get; set; } = DateTime.Now;
 
     protected override async Task OnInitializedAsync()
     {
         Directors = await AdminService.GetAsync<DirectorDTO>("directors");
+
+        if (Page == PageType.Edit)
+            Date = Model.Released;
     }
 
     async Task OnFormSubmit()

@@ -1,0 +1,40 @@
+﻿@page "/"
+@inject IMembershipService membershipService
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1 class="text-white align-content-center">MegaFilms Dashboard</h1>
+
+<div class="text-white">
+    
+    @foreach (var genre in Genres)
+    {
+        @if (genre.Films.Count() > 0)
+        {
+            <h4>@genre.Name</h4>
+            <div class="d-flex flex-wrap films">
+                @foreach (var film in Films.Where(f => f.Genres.Contains(genre.Name)))
+                {
+
+                    <a href="film/@film.Id">
+                        <div class="film" style="background-image:url('@film.ThumbnailUrl');">
+                            <p>@film.Title</p>
+                        </div>
+                    </a>
+                }
+
+            </div>
+        }
+    }
+</div>
+
+@code {
+    public List<FilmDTO> Films { get; set; } = new();
+    public List<GenreDTO> Genres { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Films = await membershipService.GetFilmsAsync();
+        Genres = await membershipService.GetGenresAsync();
+    }
+}
