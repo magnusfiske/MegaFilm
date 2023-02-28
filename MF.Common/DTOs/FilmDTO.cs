@@ -39,5 +39,6 @@ public class FilmEditDTO : FilmCreateDTO
 public class FilmSimilarDTO : FilmEditDTO
 {
     public virtual DirectorDTO? Director { get; set; } = new();
+    public virtual List<string>? Genres { get; set; } = new();
     public virtual List<SimilarFilmDTO>? SimilarFilms { get; set; } = new();
 }

@@ -19,6 +19,16 @@
                 <p>Released: @Model.Released.ToString("yyyy")</p>
             </div>
         </div>
+        <div>
+            @if (Model.Genres.Count() >= 2)
+            {
+                <p>Genre: @Model.Genres.Select(g => g).Aggregate((i, j) => i + ", " + j)</p>
+            }
+            else
+            {
+                <p>Genre: @Model.Genres.FirstOrDefault()</p>
+            }
+        </div>
         <a class="btn btn-primary rounded-0 mt-4" href="/play/@Model.Id"><i class="oi oi-media-play"><span class="veritcal-align ms-2">Play</span></i></a>
     </div>
     <aside>
@@ -50,10 +60,12 @@
     [Parameter] public int Id { get; set; }
     //public FilmDTO Model { get; set; } = new();
     public FilmSimilarDTO Model { get; set; } = new();
+    public string Genres { get; set; } 
 
     protected override async Task OnParametersSetAsync()
     {
-        //Model = await membershipService.GetFilmAsync(Id);
         Model = await membershipService.GetFilmSimilarAsync(Id);
+
     }
+
 }

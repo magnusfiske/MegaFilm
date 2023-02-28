@@ -1,0 +1,55 @@
+﻿@page "/register"
+@inject NavigationManager NavManager
+@inject UserHttpClient Http
+<div class="d-flex justify-content-end">
+    <div class="me-4 d-flex flex-column justify-content-center">
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="d-flex">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>@message</strong>
+                    <button type="button" @onclick="CloseAlert" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="m-4">
+        <h3 class="text-white">Create an Account</h3>
+
+        <EditForm Model="@model" OnValidSubmit="@CreateUser">
+            <label id="email">Email address</label>
+            <InputText id="email" class="form-control" @bind-Value="model.Email" placeholder="Email"></InputText>
+            <label id="password">Password</label>
+            <InputText id="password" class="form-control" @bind-Value="model.Password" placeholder="Password"></InputText>
+            <label id="confirmPassword">Confirm Password</label>
+            <InputText id="confirmPassword" class="form-control" @bind-Value="model.ConfirmPassword" placeholder="Confirm Password"></InputText>
+            <label class="text-white m-2">
+                <InputCheckbox @bind-Value="model.IsCustomer"></InputCheckbox>
+                Customer
+            </label>
+            <div>
+            <button type="submit" class="btn btn-primary">Register</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+@code {
+    public CreateUserModel model { get; set; } = new();
+    public string message { get; set; } = string.Empty;
+
+    void CloseAlert() => message = string.Empty;
+
+    private async Task CreateUser()
+    {
+        try
+        {
+            message = string.Empty;
+            await Http.CreateUser(model);
+            message = "User created.";
+        }
+        catch (Exception ex)
+        {
+            message = "Failed to create user.";
+        }
+    }
+}

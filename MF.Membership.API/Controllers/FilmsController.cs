@@ -4,138 +4,138 @@ using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace MF.Membership.API.Controllers
+namespace MF.Membership.API.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class FilmsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class FilmsController : ControllerBase
+    private readonly IDbService _db;
+
+    public FilmsController(IDbService db)
     {
-        private readonly IDbService _db;
-
-        public FilmsController(IDbService db)
+        _db = db;
+    }
+    // GET: api/<FilmsController>
+    [HttpGet]
+    public async Task<IResult> Get()
+    {
+        try
         {
-            _db = db;
+
+            _db.Include<Film>();
+            _db.IncludeRef<FilmGenre>();
+            var films = await _db.GetAsync<Film, FilmDTO>();
+            return Results.Ok(films);
         }
-        // GET: api/<FilmsController>
-        [HttpGet]
-        public async Task<IResult> Get()
-        {
-            try
-            {
+        catch { }
 
-                _db.Include<Film>();
+        return Results.NotFound();
+    }
+
+    // GET api/<FilmsController>/5
+    [HttpGet("{id}")]
+    public async Task<IResult> Get(int id,[FromQuery]bool isSimilar)
+    {
+        try
+        {   
+            _db.Include<Film>();
+            if(isSimilar)
+            {
                 _db.IncludeRef<FilmGenre>();
-                var films = await _db.GetAsync<Film, FilmDTO>();
-                return Results.Ok(films);
+                _db.IncludeRef<SimilarFilm>();
+                var result = await _db.SingleAsync<Film, FilmSimilarDTO>(i => i.Id == id);
+                return result is null ? Results.NotFound() : Results.Ok(result);
             }
-            catch { }
-
-            return Results.NotFound();
-        }
-
-        // GET api/<FilmsController>/5
-        [HttpGet("{id}")]
-        public async Task<IResult> Get(int id,[FromQuery]bool isSimilar)
-        {
-            try
-            {   
-                _db.Include<Film>();
-                if(isSimilar)
-                {
-                    _db.IncludeRef<SimilarFilm>();
-                    var result = await _db.SingleAsync<Film, FilmSimilarDTO>(i => i.Id == id);
-                    return result is null ? Results.NotFound() : Results.Ok(result);
-                }
-                else
-                {
-                    _db.IncludeRef<FilmGenre>();
-                    var result = await _db.SingleAsync<Film, FilmDTO>(i => i.Id == id);
-                    return result is null ? Results.NotFound() : Results.Ok(result);
-                }
-            }
-            catch { }
-
-            return Results.NotFound();
-        }
-
-        // POST api/<FilmsController>
-        [HttpPost]
-        public async Task<IResult> Post(FilmCreateDTO dto)
-        {
-            try
+            else
             {
-                if (dto == null) { return Results.BadRequest(); }
-
-                var entity = await _db.AddAsync<Film, FilmCreateDTO>(dto);
-
-                if (await _db.SaveChangesAsync())
-                {
-                    var node = typeof(Film).Name.ToLower();
-                    return Results.Created($"/{node}s/{entity.Id}", dto);
-                }
-
+                _db.IncludeRef<FilmGenre>();
+                var result = await _db.SingleAsync<Film, FilmDTO>(i => i.Id == id);
+                return result is null ? Results.NotFound() : Results.Ok(result);
             }
-            catch { }
-
-            return Results.BadRequest();
         }
+        catch { }
 
-        // PUT api/<FilmsController>/5
-        [HttpPut("{id}")]
-        public async Task<IResult> Put(int id, FilmEditDTO dto)
+        return Results.NotFound();
+    }
+
+    // POST api/<FilmsController>
+    [HttpPost]
+    public async Task<IResult> Post(FilmCreateDTO dto)
+    {
+        try
         {
-            try
+            if (dto == null) { return Results.BadRequest(); }
+
+            var entity = await _db.AddAsync<Film, FilmCreateDTO>(dto);
+
+            if (await _db.SaveChangesAsync())
             {
-                if (dto == null || id != dto.Id)
-                    return Results.BadRequest();
-
-                if (!await _db.AnyAsync<Film>(i => i.Id.Equals(id)))
-                    return Results.NotFound();
-
-                _db.Update<Film, FilmEditDTO>(id, dto);
-
-                var success = await _db.SaveChangesAsync();
-
-                if (!success)
-                    return Results.BadRequest();
-
-                return Results.NoContent();
+                var node = typeof(Film).Name.ToLower();
+                return Results.Created($"/{node}s/{entity.Id}", dto);
             }
-            catch { }
-            return Results.NotFound();
-        }
 
-        // DELETE api/<FilmsController>/5
-        [HttpDelete("{id}")]
-        public async Task<IResult> Delete(int id)
+        }
+        catch { }
+
+        return Results.BadRequest();
+    }
+
+    // PUT api/<FilmsController>/5
+    [HttpPut("{id}")]
+    public async Task<IResult> Put(int id, FilmEditDTO dto)
+    {
+        try
         {
-            try
-            {
+            if (dto == null || id != dto.Id)
+                return Results.BadRequest();
 
-                return !await _db.DeleteSimilarFilmsAsync(id) ? Results.UnprocessableEntity()
-                    : !await _db.DeleteFilmGenresAsync(id) ? Results.UnprocessableEntity()
-                    : !await _db.DeleteAsync<Film>(id) ? Results.NotFound()
-                    : !await _db.SaveChangesAsync() ? Results.BadRequest() : Results.NoContent();
+            if (!await _db.AnyAsync<Film>(i => i.Id.Equals(id)))
+                return Results.NotFound();
 
+            _db.Update<Film, FilmEditDTO>(id, dto);
 
-                //if (!await _db.DeleteSimilarFilmsAsync(id))
-                //    return Results.UnprocessableEntity();
+            var success = await _db.SaveChangesAsync();
 
-                //if (!await _db.DeleteFilmGenresAsync(id))
-                //    return Results.UnprocessableEntity();
+            if (!success)
+                return Results.BadRequest();
 
-                //if (!await _db.DeleteAsync<Film>(id))
-                //    return Results.NotFound();
-
-                //if (!await _db.SaveChangesAsync())
-                //    return Results.BadRequest();
-
-                //return Results.NoContent();
-
-            }
-            catch { }
-
-            return Results.BadRequest();
+            return Results.NoContent();
         }
+        catch { }
+        return Results.NotFound();
+    }
+
+    // DELETE api/<FilmsController>/5
+    [HttpDelete("{id}")]
+    public async Task<IResult> Delete(int id)
+    {
+        try
+        {
+
+            return !await _db.DeleteSimilarFilmsAsync(id) ? Results.UnprocessableEntity()
+                : !await _db.DeleteFilmGenresAsync(id) ? Results.UnprocessableEntity()
+                : !await _db.DeleteAsync<Film>(id) ? Results.NotFound()
+                : !await _db.SaveChangesAsync() ? Results.BadRequest() : Results.NoContent();
+
+
+            //if (!await _db.DeleteSimilarFilmsAsync(id))
+            //    return Results.UnprocessableEntity();
+
+            //if (!await _db.DeleteFilmGenresAsync(id))
+            //    return Results.UnprocessableEntity();
+
+            //if (!await _db.DeleteAsync<Film>(id))
+            //    return Results.NotFound();
+
+            //if (!await _db.SaveChangesAsync())
+            //    return Results.BadRequest();
+
+            //return Results.NoContent();
+
+        }
+        catch { }
+
+        return Results.BadRequest();
     }
 }

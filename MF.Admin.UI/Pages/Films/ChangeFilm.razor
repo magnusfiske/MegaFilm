@@ -18,7 +18,8 @@
         @if (!Page.Equals(PageType.Delete))
         {
             <div class="mb-3">
-                <MudDatePicker Editable="true" id="Date" class="form-control me-2" @bind-Value="Model.Released" Label="Release date" Placeholder="@Date.ToString("d")"/>
+                <InputDate id="Date" class="form-control me-2" @bind-Value="Model.Released" Label="Release date" />
+                <!--<MudDatePicker Editable="true" id="Date" class="form-control me-2" @bind-Value="Model.Released" Label="Release date" Placeholder="@Date.ToString("d")"/>-->
                 <ValidationMessage For="@(() => Model.Released)" />
             </div>
             <div class="mb-3">

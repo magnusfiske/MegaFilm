@@ -83,7 +83,7 @@ public class UserController : ControllerBase
         return Results.BadRequest();
     }
 
-    [Route("api/user/register")]
+    [Route("api/users/register")]
     [HttpPost]
     public async Task<IResult> Register(RegisterUserDTO registerUserDTO)
     {
